@@ -37,7 +37,7 @@ async function actualizar(req, res) {
 
         const { usuario, clave, idafiliado } = req.body;
 
-        const hash = await bcrypt.hashSync(clave, 10);
+        const hash = await bcrypt.hash(clave, 10);
 
         await pool.request()
                 .input('Operacion', 2)
@@ -63,9 +63,9 @@ async function acceder(req, res) {
 
         const result = await pool.query`SELECT Clave, Id FROM Usuarios where Usuario = ${usuario}`;
 
-        if (result.recordset.length < 0) {
+        if (result.recordset.length == 0) {
 
-            return res.status(400).send({mensaje:'Este usuario no existe'});
+            return res.status(400).send({mensaje:'Este usuario no está registrado en la base de datos.'});
     
         } else {
 
@@ -84,12 +84,18 @@ async function acceder(req, res) {
 }
 
 async function generarToken(clave, hash, id, res) {
-
     const verify = await bcrypt.compare(clave, hash);
 
     try {
 
         if (verify) {
+
+            const pool = await conn;
+
+            const result = await pool.request()
+                                     .input('AfiliadosId', id)
+                                     .input('Operacion', 4)
+                                     .execute('sp_agregar_usuario_afiliado')
 
             let payload = { 
                 sub: id
@@ -97,7 +103,7 @@ async function generarToken(clave, hash, id, res) {
     
             const token = jwt.sign(payload, process.env.TOKEN_SECRET, {expiresIn:process.env.TOKEN_EXPIRES});
     
-            return res.status(200).send({token});
+            return res.status(200).send({token, afiliado: result.recordset});
     
         } else {
     
@@ -110,7 +116,6 @@ async function generarToken(clave, hash, id, res) {
         return res.status(400).send({mensaje:`${e}`});
 
     }
-
 }
 
 module.exports = {

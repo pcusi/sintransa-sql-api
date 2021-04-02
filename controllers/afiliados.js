@@ -2,35 +2,40 @@ const { conn } = require('../server/database/connection');
 const moment = require('moment');
 
 async function agregar(req, res) {
-
     try {
 
         const { nombres, apellidos, dni, telefono, cargo, area } = req.body;
 
         const pool = await conn;
 
-        await pool.request()
-                .input('Operacion', 1)
-                .input('Nombres', nombres)
-                .input('Dni', dni)
-                .input('Apellidos', apellidos)
-                .input('Cargo', cargo)
-                .input('Area', area)
-                .input('Telefono', telefono)
-                .execute("sp_agregar_afiliado")
-                
-        return res.status(200).send({mensaje:'El afiliado ha sido agregado'});
+        if (!req.usuario) {
+
+            return res.status(401).send({mensaje:'El usuario no tiene permisos suficientes.'});
+
+        } else {
+
+            await pool.request()
+            .input('Operacion', 1)
+            .input('Nombres', nombres)
+            .input('Dni', dni)
+            .input('Apellidos', apellidos)
+            .input('Cargo', cargo)
+            .input('Area', area)
+            .input('Telefono', telefono)
+            .execute("sp_agregar_afiliado")
+            
+            return res.status(200).send({mensaje:'El afiliado ha sido agregado'});
+
+        }
 
     } catch (e) {
     
         return res.status(500).send({mensaje:`Ha sucedido esto => ${e}`})
 
     }
-
 }
 
 async function actualizar(req, res) {
-
     try {
 
         const id = req.params.id;
@@ -57,11 +62,9 @@ async function actualizar(req, res) {
         return res.status(500).send({mensaje:`Ha sucedido esto => ${e}`})
 
     }
-
 }
 
 async function listar(req, res) {
-
     try {
 
         const pool = await conn;
@@ -77,7 +80,6 @@ async function listar(req, res) {
         return res.status(500).send({mensaje:`Ha sucedido esto => ${e}`})
 
     }
-
 }
 
 module.exports = {
