@@ -61,7 +61,7 @@ async function acceder(req, res) {
 
         const { usuario, clave } = req.body;
 
-        const result = await pool.query`SELECT Clave, Id FROM Usuarios where Usuario = ${usuario}`;
+        const result = await pool.query`SELECT Clave, Id, AfiliadosId FROM Usuarios where Usuario = ${usuario}`;
 
         if (result.recordset.length == 0) {
 
@@ -69,7 +69,7 @@ async function acceder(req, res) {
     
         } else {
 
-            await generarToken(clave, result.recordset[0].Clave, result.recordset[0].Id, res);
+            await generarToken(clave, result.recordset[0].Clave, result.recordset[0].Id, result.recordset[0].AfiliadosId, res);
 
         }
         
@@ -83,7 +83,7 @@ async function acceder(req, res) {
     }
 }
 
-async function generarToken(clave, hash, id, res) {
+async function generarToken(clave, hash, id, afiId, res) {
     const verify = await bcrypt.compare(clave, hash);
 
     try {
@@ -93,7 +93,7 @@ async function generarToken(clave, hash, id, res) {
             const pool = await conn;
 
             const result = await pool.request()
-                                     .input('AfiliadosId', id)
+                                     .input('AfiliadosId', afiId)
                                      .input('Operacion', 4)
                                      .execute('sp_agregar_usuario_afiliado')
 

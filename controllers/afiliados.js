@@ -4,7 +4,7 @@ const moment = require('moment');
 async function agregar(req, res) {
     try {
 
-        const { nombres, apellidos, dni, telefono, cargo, area } = req.body;
+        const { nombres, apellidos, dni, telefono, cargo, area, direccion } = req.body;
 
         const pool = await conn;
 
@@ -22,9 +22,10 @@ async function agregar(req, res) {
             .input('Cargo', cargo)
             .input('Area', area)
             .input('Telefono', telefono)
+            .input('Direccion', direccion)
             .execute("sp_agregar_afiliado")
             
-            return res.status(200).send({mensaje:'El afiliado ha sido agregado'});
+            return res.status(200).send({mensaje:'El afiliado ha sido agregado.'});
 
         }
 
@@ -40,7 +41,7 @@ async function actualizar(req, res) {
 
         const id = req.params.id;
 
-        const { nombres, apellidos, dni, telefono, cargo, area } = req.body;
+        const { nombres, apellidos, dni, telefono, cargo, area, direccion } = req.body;
 
         const pool = await conn;
 
@@ -53,9 +54,10 @@ async function actualizar(req, res) {
         .input('Telefono', telefono)
         .input('Cargo', cargo)
         .input('Area', area)
+        .input('Direccion', direccion)
         .execute("sp_agregar_afiliado")
 
-        return res.status(200).send({mensaje:'El afiliado ha sido actualizado'});
+        return res.status(200).send({mensaje:'El afiliado ha sido actualizado.'});
 
     } catch (e) {
     
@@ -82,8 +84,42 @@ async function listar(req, res) {
     }
 }
 
+async function activar(req, res) {
+
+    try {
+
+        const id = req.params.id;
+
+        const pool = await conn;
+
+        const request = await pool.query`SELECT Activo FROM Afiliados where Id = ${id}`;
+
+        request.recordset[0].Activo == 1 ? pool.request()
+                                            .input('Activo', 0)
+                                            .input('Operacion', 4)
+                                            .input('Id', id)
+                                            .execute('sp_agregar_afiliado') 
+                                            
+                                           :
+
+                                           pool.request()
+                                               .input('Activo', 1)
+                                               .input('Operacion', 4)
+                                               .input('Id', id)
+                                               .execute('sp_agregar_afiliado')
+
+        return res.status(200).send({mensaje: request.recordset[0].Activo == 1 ? `El afiliado ha sido desactivado.` : `El afiliado ha sido activado.`});
+
+    } catch(e) {
+
+        return res.status(500).send({mensaje:`Ha sucedido esto => ${e}`});
+
+    }
+}
+
 module.exports = {
     agregar,
     actualizar,
-    listar
+    listar,
+    activar
 }
