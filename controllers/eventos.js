@@ -59,11 +59,19 @@ async function listar(req, res) {
 
         const pool = await conn;
 
-        const result = await pool.request()
+        const resultado = await pool.request()
                   .input('Operacion', 3)
                   .execute('sp_agregar_evento')
-                  
-        return res.status(200).send({eventos: result.recordset});
+
+        var eventos = resultado.recordset.map((item) => {
+            var mapped = {};
+            for (var key in item) {
+                      mapped[key.toLowerCase()] = item[key];
+            }    
+            return mapped;
+        });
+        
+        return res.status(200).send({eventos});
 
     } catch(e) {
 

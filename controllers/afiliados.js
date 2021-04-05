@@ -75,7 +75,17 @@ async function listar(req, res) {
                                     .input('Operacion', 3)
                                     .execute("sp_agregar_afiliado")
 
-        return res.status(200).send({ afiliados: resultado.recordset });
+        var afiliados = resultado.recordset.map((item) => {
+            var mapped = {};
+            for (var key in item) {
+              mapped[key.toLowerCase()] = item[key];
+            }
+          
+            return mapped;
+        });
+
+
+        return res.status(200).send({ afiliados });
 
     } catch (e) {
     
